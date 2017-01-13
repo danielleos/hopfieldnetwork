@@ -95,3 +95,71 @@ If[
 isFixedPoint[[i]]==True,AppendTo[fixedPoints,i]]
 ];
 Return[fixedPoints];
+
+
+
+
+(*Experiment 1*)
+(*List all permutations of list length 9 made up of {0,1}*)
+binaryStates=Tuples[{0,1},9]
+
+(*Call the fixed points function*)
+fixedPoints = getFixedPoints[binaryStates]
+
+exp1[fixedPoints]:= Print["The fixed points are: "]; 
+For[i=1,i<=Length[fixedPoints],i++,
+Print[fixedPoints[[i]]," "]
+]
+
+
+
+
+
+(*Experiment 2*)
+neighbours = {}
+getNeighbours[state_]:=Module[
+{s,ss},
+s= state;
+ss=state;
+For[i=1,i<=9,i++,
+ss[[i]]=Abs[ss-1];
+AppendTo[neighbours,ss]
+];
+neighbours
+]
+
+exp2[fixedPoints]:=For[i=1,i<=Length[fixedPoints],i++,
+Print["The energy of the fixed point ", fixedPoints[[i]], " is: ", energy[fixedPoints[[i]]]];
+For[j=1, j<=Length[neighbours]],j++,
+Print["The energy of its neighbour ", neighbours[[j]], " is: ", energy[neighbours[[j]]
+]
+]
+]
+
+
+
+
+(*Experiment 3*)
+(*Async*)
+exp3async:=
+Print["Inhibition constant = ", w1];
+Print["Asynchronous Update: "];
+For[i=1, i<=Length[init],i++,
+Print[i,": ", hopfield[async,weight, i, 5000]]
+]
+
+(*Scan*)
+exp3scan:=
+Print["Inhibition constant = ", w1];
+Print["Scan Update: "];
+For[i=1,i<=Length[init],i++,
+Print[i,": ", hopfield[scan,weight,i,50]]
+]
+
+
+
+
+(*Weight Matrix*)
+(*Weight Matrix*)
+Print["Weight matrix: "]
+w = getConnections[w1]
