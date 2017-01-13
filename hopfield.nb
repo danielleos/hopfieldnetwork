@@ -1,0 +1,97 @@
+(*Table of initial states chosen at random - taken from 'Appendix: Mathematica Code'*)
+init = {{1, 1, 1, 0, 0, 1, 1, 0, 1}, {1, 0, 0, 1, 0, 1, 0, 0, 1},
+{1, 1, 0, 0, 1, 0, 0, 0, 1}, {0, 0, 0, 1, 0, 1, 0, 1, 1},
+{1, 0, 0, 1, 0, 0, 0, 0, 0}, {1, 1, 0, 1, 1, 0, 1, 1, 1},
+{0, 0, 1, 0, 0, 0, 1, 1, 1}, {1, 1, 0, 1, 0, 0, 0, 1, 0},
+{0, 1, 0, 1, 0, 1, 0, 0, 0}, {0, 1, 0, 1, 1, 0, 1, 0, 0},
+{0, 0, 1, 0, 1, 0, 0, 0, 1}, {0, 1, 0, 1, 1, 1, 0, 1, 1},
+{1, 0, 1, 1, 1, 1, 1, 1, 0}, {1, 1, 0, 0, 1, 0, 1, 0, 0},
+{1, 0, 0, 1, 0, 1, 0, 0, 0}, {1, 0, 0, 1, 1, 0, 0, 0, 1},
+{0, 0, 1, 0, 0, 0, 1, 0, 1}, {1, 0, 0, 1, 1, 0, 1, 0, 1},
+{0, 0, 0, 0, 1, 0, 1, 1, 1}, {1, 0, 0, 1, 1, 0, 0, 1, 0}}
+
+(*Inhibition Constants*)
+w1 = 0.5
+w2=1
+
+(*Threshold activation function*)
+threshold[x_] :=  Round[0.5+0.5Sign[x]]
+
+(*Connection weights as a 9x9 matrix dependent on inhibition constant w*)
+getConnections[w_] := Table[
+Which[
+(*diagonal entries are of value 0*)
+i == j, 0,
+(*According to Hebbian learning rule, we apply the weights in the matrix symmetrically*)
+i == 2 && (j == 5 || j == 8), 1,i == 5 && (j == 2 || j == 8), 1,i == 8 && (j == 2 || j == 5), 1,
+i == 4 && (j == 5 || j == 6), 1, i == 5 && (j == 4 || j == 6), 1, i == 6 && (j == 5 || j == 4), 1, 
+(*All other entries are given values of -w*)
+True, -w], 
+{i, 9}, {j, 9}
+]
+
+(*Initialise energy constant*)
+en=0
+(*Function to calculate the total energy in the network for a given state*)
+energy[state_]:= For[i=1,i<=9,i++,
+For[j=1,j<=9,j++,
+en+=weight[i,j]*state[0,i]*state[0,j]
+];
+Return[en*-0.5]
+]
+
+(*Function which changes all unit states in scan order*)
+scan[weight_,state_]:=Module[
+{a,b},
+b = state;
+Do[a = weight.b;
+b[[i]]=threshold[a[[i]]],{i,9}];
+Return[b]
+]
+
+(*Function whose output state, at a randomly chosen unit, is changed*)
+async[weight_,state_] := Module[
+{a,b,c},
+a = Ceiling[9*Random[]];
+b = state;
+c = threshold[weight.b];
+b[[a]] = c[[a]];
+Return[b]
+]
+
+(*Code for n cycles of an update function on table of initial states*)
+update[weight_,state_,method_,iterations_]:= Module[
+{s,n},
+s=state
+n=iterations;
+Catch[
+For[i=1,i<=n,i++,
+Which[
+method=="asynchronous",async[weight,s],
+method=="scan",scan[weight,s],
+True,Throw["Please input one of the following methods out of 'asynchronous' or 'scan'."]
+]
+]
+]
+]
+
+(*Output is table of final states of same size as matrix states*)
+hopfield[f_,weight_,states_,n_] := Module[
+{a,b},
+b = states;
+Do[a = b[[i]];
+Do[a = f[weight,a],{j,n}];
+b[[i]] = a,{i,Length[b]}];
+Return[b]
+]
+
+(*Function that determines if a state is a fixed point for the network*)
+isFixedPoint[state_]:= Return[Sum[state==threshold[weight.state]==9]==True]
+
+(*Function that tests if a state is a fixed point and adds it to a list if it is*)
+getFixedPoints[states_]:=fixedPoints={};
+For[i=1,i<=states,i++,
+If[
+isFixedPoint[[i]]==True,AppendTo[fixedPoints,i]]
+];
+Return[fixedPoints];
